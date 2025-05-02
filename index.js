@@ -9,7 +9,7 @@ document.addEventListener("DOMContentLoaded", () => {
                       meshes: [],
                       floor: null,
                       group: new THREE.Object3D(),
-                      grid: { cols: 10, rows: 20 }
+                      grid: { cols: 20, rows: 20 }
                     };
                     
                     let mouseMoved = false
