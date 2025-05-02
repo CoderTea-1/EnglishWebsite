@@ -1,0 +1,46 @@
+@import url('https://fonts.googleapis.com/css?family=Charmonman');
+
+body{
+  background-color: hsl(0, 0%, 0%);
+  margin: 0;
+  padding: 0;
+}
+
+canvas{
+  display: block
+}
+
+h1, h2{
+  margin: 0;
+}
+
+.text{
+  position: absolute;
+  width: 100vw;
+  height: 100vh;
+  font-weight: 700;
+  top: 50%;
+  left: 50%;
+  color: hsla(100, 100%, 100%, 1);
+  transform: translate(-50%, -50%);
+  z-index: 50;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+
+.text h1{
+  font-size: 5rem;
+}
+
+.text h2{
+  font-size: 2rem;
+  color: #808080;
+  font-family: 'Charmonman', cursive;
+}
+
+.canvas-container{
+  position: relative;
+  z-index: 100
+}
