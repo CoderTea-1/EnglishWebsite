@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="initial-scale=1.0, user-scalable=no"/>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<style>
+html, body {
+  font: normal 14px/1.4 sans-serif;
+  background: #f1f1f1;
+}
+
+p {
+  margin: 0 0 1rem;
+}
+
+ins {
+  background: lightgreen;
+  text-decoration: none;
+}
+
+del {
+  background: pink;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+table td{
+  border: 1px solid #ccc;
+}
+
+.card {
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  margin: 1rem;
+  padding: 1rem;
+}
+
+.card .card {
+  margin: 0;
+  flex: 1 0 0;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  margin-right: -8px;
+}
+
+.col {
+  display: flex;
+  flex: 1 0 0;
+  flex-direction: column;
+  margin-right: 8px;
+}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="row">
+    <div class="col">
+      <h4>Past version</h4>
+      <div class="card" id="outputOriginal"></div>
+    </div>
+    <div class="col">
+      <h4>Changes</h4>
+      <div class="card" id="output"></div>
+    </div>
+    <div class="col">
+      <h4>New version</h4>
+      <div class="card" id="outputNew"></div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
+<script>
+
+  var Match, calculate_operations, consecutive_where, create_index, diff, find_match, find_matching_blocks, html_to_tokens, is_end_of_tag, is_start_of_tag, is_tag, is_whitespace, isnt_tag, op_map, recursively_find_matching_blocks, render_operations, wrap;
+  is_end_of_tag = function(char) {
+    return char === '>';
+  };
+  is_start_of_tag = function(char) {
+    return char === '<';
+  };
+  is_whitespace = function(char) {
+    return /^\s+$/.test(char);
+  };
+  is_tag = function(token) {
+    return /^\s*<[^>]+>\s*$/.test(token);
+  };
+  isnt_tag = function(token) {
+    return !is_tag(token);
+  };
+  Match = class Match {
+    constructor(start_in_before1, start_in_after1, length1) {
+      this.start_in_before = start_in_before1;
+      this.start_in_after = start_in_after1;
+      this.length = length1;
+      this.end_in_before = (this.start_in_before + this.length) - 1;
+      this.end_in_after = (this.start_in_after + this.length) - 1;
+    }
+  };
+  html_to_tokens = function(html) {
+    var char, current_word, i, len, mode, words;
+    mode = 'char';
+    current_word = '';
+    words = [];
+    for (i = 0, len = html.length; i < len; i++) {
+      char = html[i];
+      switch (mode) {
+        case 'tag':
+          if (is_end_of_tag(char)) {
+            current_word += '>';
+            words.push(current_word);
+            current_word = '';
+            if (is_whitespace(char)) {
+              mode = 'whitespace';
+            } else {
+              mode = 'char';
+            }
+          } else {
+            current_word += char;
+          }
+          break;
+        case 'char':
+          if (is_start_of_tag(char)) {
+            if (current_word) {
+              words.push(current_word);
+            }
+            current_word = '<';
+            mode = 'tag';
+          } else if (/\s/.test(char)) {
+            if (current_word) {
+              words.push(current_word);
+            }
+            current_word = char;
+            mode = 'whitespace';
+          } else if (/[\w\#@]+/i.test(char)) {
+            current_word += char;
+          } else {
+            if (current_word) {
+              words.push(current_word);
+            }
+            current_word = char;
+          }
+          break;
+        case 'whitespace':
+          if (is_start_of_tag(char)) {
+            if (current_word) {
+              words.push(current_word);
+            }
+            current_word = '<';
+            mode = 'tag';
+          } else if (is_whitespace(char)) {
+            current_word += char;
+          } else {
+            if (current_word) {
+              words.push(current_word);
+            }
+            current_word = char;
+            mode = 'char';
+          }
+          break;
+        default:
+          throw new Error(`Unknown mode ${mode}`);
+      }
+    }
+    if (current_word) {
+      words.push(current_word);
+    }
+    return words;
+  };
+  find_match = function(before_tokens, after_tokens, index_of_before_locations_in_after_tokens, start_in_before, end_in_before, start_in_after, end_in_after) {
+    var best_match_in_after, best_match_in_before, best_match_length, i, index_in_after, index_in_before, j, len, locations_in_after, looking_for, match, match_length_at, new_match_length, new_match_length_at, ref, ref1;
+    best_match_in_before = start_in_before;
+    best_match_in_after = start_in_after;
+    best_match_length = 0;
+    match_length_at = {};
+    for (index_in_before = i = ref = start_in_before, ref1 = end_in_before;
+      (ref <= ref1 ? i < ref1 : i > ref1); index_in_before = ref <= ref1 ? ++i : --i) {
+      new_match_length_at = {};
+      looking_for = before_tokens[index_in_before];
+      locations_in_after = index_of_before_locations_in_after_tokens[looking_for];
+      for (j = 0, len = locations_in_after.length; j < len; j++) {
+        index_in_after = locations_in_after[j];
+        if (index_in_after < start_in_after) {
+          continue;
+        }
+        if (index_in_after >= end_in_after) {
+          break;
+        }
+        if (match_length_at[index_in_after - 1] == null) {
+          match_length_at[index_in_after - 1] = 0;
+        }
+        new_match_length = match_length_at[index_in_after - 1] + 1;
+        new_match_length_at[index_in_after] = new_match_length;
+        if (new_match_length > best_match_length) {
+          best_match_in_before = index_in_before - new_match_length + 1;
+          best_match_in_after = index_in_after - new_match_length + 1;
+          best_match_length = new_match_length;
+        }
+      }
+      match_length_at = new_match_length_at;
+    }
+    if (best_match_length !== 0) {
+      match = new Match(best_match_in_before, best_match_in_after, best_match_length);
+    }
+    return match;
+  };
+  recursively_find_matching_blocks = function(before_tokens, after_tokens, index_of_before_locations_in_after_tokens, start_in_before, end_in_before, start_in_after, end_in_after, matching_blocks) {
+    var match;
+    match = find_match(before_tokens, after_tokens, index_of_before_locations_in_after_tokens, start_in_before, end_in_before, start_in_after, end_in_after);
+    if (match != null) {
+      if (start_in_before < match.start_in_before && start_in_after < match.start_in_after) {
+        recursively_find_matching_blocks(before_tokens, after_tokens, index_of_before_locations_in_after_tokens, start_in_before, match.start_in_before, start_in_after, match.start_in_after, matching_blocks);
+      }
+      matching_blocks.push(match);
+      if (match.end_in_before <= end_in_before && match.end_in_after <= end_in_after) {
+        recursively_find_matching_blocks(before_tokens, after_tokens, index_of_before_locations_in_after_tokens, match.end_in_before + 1, end_in_before, match.end_in_after + 1, end_in_after, matching_blocks);
+      }
+    }
+    return matching_blocks;
+  };
+  create_index = function(p) {
+    var i, idx, index, len, ref, token;
+    if (p.find_these == null) {
+      throw new Error('params must have find_these key');
+    }
+    if (p.in_these == null) {
+      throw new Error('params must have in_these key');
+    }
+    index = {};
+    ref = p.find_these;
+    for (i = 0, len = ref.length; i < len; i++) {
+      token = ref[i];
+      index[token] = [];
+      idx = p.in_these.indexOf(token);
+      while (idx !== -1) {
+        index[token].push(idx);
+        idx = p.in_these.indexOf(token, idx + 1);
+      }
+    }
+    return index;
+  };
+  find_matching_blocks = function(before_tokens, after_tokens) {
+    var index_of_before_locations_in_after_tokens, matching_blocks;
+    matching_blocks = [];
+    index_of_before_locations_in_after_tokens = create_index({
+      find_these: before_tokens,
+      in_these: after_tokens
+    });
+    return recursively_find_matching_blocks(before_tokens, after_tokens, index_of_before_locations_in_after_tokens, 0, before_tokens.length, 0, after_tokens.length, matching_blocks);
+  };
+  calculate_operations = function(before_tokens, after_tokens) {
+    var action_map, action_up_to_match_positions, i, index, is_single_whitespace, j, last_op, len, len1, match, match_starts_at_current_position_in_after, match_starts_at_current_position_in_before, matches, op, operations, position_in_after, position_in_before, post_processed;
+    if (before_tokens == null) {
+      throw new Error('before_tokens?');
+    }
+    if (after_tokens == null) {
+      throw new Error('after_tokens?');
+    }
+    position_in_before = position_in_after = 0;
+    operations = [];
+    action_map = {
+      'false,false': 'replace',
+      'true,false': 'insert',
+      'false,true': 'delete',
+      'true,true': 'none'
+    };
+    matches = find_matching_blocks(before_tokens, after_tokens);
+    matches.push(new Match(before_tokens.length, after_tokens.length, 0));
+    for (index = i = 0, len = matches.length; i < len; index = ++i) {
+      match = matches[index];
+      match_starts_at_current_position_in_before = position_in_before === match.start_in_before;
+      match_starts_at_current_position_in_after = position_in_after === match.start_in_after;
+      action_up_to_match_positions = action_map[[match_starts_at_current_position_in_before, match_starts_at_current_position_in_after].toString()];
+      if (action_up_to_match_positions !== 'none') {
+        operations.push({
+          action: action_up_to_match_positions,
+          start_in_before: position_in_before,
+          end_in_before: (action_up_to_match_positions !== 'insert' ? match.start_in_before - 1 : void 0),
+          start_in_after: position_in_after,
+          end_in_after: (action_up_to_match_positions !== 'delete' ? match.start_in_after - 1 : void 0)
+        });
+      }
+      if (match.length !== 0) {
+        operations.push({
+          action: 'equal',
+          start_in_before: match.start_in_before,
+          end_in_before: match.end_in_before,
+          start_in_after: match.start_in_after,
+          end_in_after: match.end_in_after
+        });
+      }
+      position_in_before = match.end_in_before + 1;
+      position_in_after = match.end_in_after + 1;
+    }
+    post_processed = [];
+    last_op = {
+      action: 'none'
+    };
+    is_single_whitespace = function(op) {
+      if (op.action !== 'equal') {
+        return false;
+      }
+      if (op.end_in_before - op.start_in_before !== 0) {
+        return false;
+      }
+      return /^\s$/.test(before_tokens.slice(op.start_in_before, +op.end_in_before + 1 || 9e9));
+    };
+    for (j = 0, len1 = operations.length; j < len1; j++) {
+      op = operations[j];
+      if (((is_single_whitespace(op)) && last_op.action === 'replace') || (op.action === 'replace' && last_op.action === 'replace')) {
+        last_op.end_in_before = op.end_in_before;
+        last_op.end_in_after = op.end_in_after;
+      } else {
+        post_processed.push(op);
+        last_op = op;
+      }
+    }
+    return post_processed;
+  };
+  consecutive_where = function(start, content, predicate) {
+    var answer, i, index, last_matching_index, len, token;
+    content = content.slice(start, +content.length + 1 || 9e9);
+    last_matching_index = void 0;
+    for (index = i = 0, len = content.length; i < len; index = ++i) {
+      token = content[index];
+      answer = predicate(token);
+      if (answer === true) {
+        last_matching_index = index;
+      }
+      if (answer === false) {
+        break;
+      }
+    }
+    if (last_matching_index != null) {
+      return content.slice(0, +last_matching_index + 1 || 9e9);
+    }
+    return [];
+  };
+  wrap = function(tag, content) {
+    var length, non_tags, position, rendering, tags;
+    rendering = '';
+    position = 0;
+    length = content.length;
+    while (true) {
+      if (position >= length) {
+        break;
+      }
+      non_tags = consecutive_where(position, content, isnt_tag);
+      position += non_tags.length;
+      if (non_tags.length !== 0) {
+        rendering += `<${tag}>${non_tags.join('')}</${tag}>`;
+      }
+      if (position >= length) {
+        break;
+      }
+      tags = consecutive_where(position, content, is_tag);
+      position += tags.length;
+      rendering += tags.join('');
+    }
+    return rendering;
+  };
+  op_map = {
+    equal: function(op, before_tokens, after_tokens) {
+      return before_tokens.slice(op.start_in_before, +op.end_in_before + 1 || 9e9).join('');
+    },
+    insert: function(op, before_tokens, after_tokens) {
+      var val;
+      val = after_tokens.slice(op.start_in_after, +op.end_in_after + 1 || 9e9);
+      return wrap('ins', val);
+    },
+    delete: function(op, before_tokens, after_tokens) {
+      var val;
+      val = before_tokens.slice(op.start_in_before, +op.end_in_before + 1 || 9e9);
+      return wrap('del', val);
+    }
+  };
+  op_map.replace = function(op, before_tokens, after_tokens) {
+    return (op_map.delete(op, before_tokens, after_tokens)) + (op_map.insert(op, before_tokens, after_tokens));
+  };
+  render_operations = function(before_tokens, after_tokens, operations) {
+    var i, len, op, rendering;
+    rendering = '';
+    for (i = 0, len = operations.length; i < len; i++) {
+      op = operations[i];
+      rendering += op_map[op.action](op, before_tokens, after_tokens);
+    }
+    return rendering;
+  };
+  diff = function(before, after) {
+    var ops;
+    if (before === after) {
+      return before;
+    }
+    before = html_to_tokens(before);
+    after = html_to_tokens(after);
+    ops = calculate_operations(before, after);
+    return render_operations(before, after, ops);
+  };
+  diff.html_to_tokens = html_to_tokens;
+  diff.find_matching_blocks = find_matching_blocks;
+  find_matching_blocks.find_match = find_match;
+  find_matching_blocks.create_index = create_index;
+  diff.calculate_operations = calculate_operations;
+  diff.render_operations = render_operations;
+  if (typeof define === 'function') {
+    define([], function() {
+      return diff;
+    });
+  } else if (typeof module !== "undefined" && module !== null) {
+    module.exports = diff;
+  } else {
+    this.htmldiff = diff;
+  }
+
+
+
+
+  let originalHTML = `
+<p>The use of genetically modified foods, which fall under the term GMO, have long been contentious. According to a paper published by the Royal Economic society, "Polling of European consumers consistently indicates a high degree of hostility to the presence of GMOs in the food supply." (Source H) This comes despite many scientists seeing potential to "create products that will enhance nutrition, increase crop yields, and reduce the use of tocis pesticides and hericides." (Source H). While science is being used in theory to benefit our society, many consumers see GMOs negatively due to the fear of negative health risks.
+
+
+Despite public worry about GMOs affect on the environment, studies have shown that GMOs are not inherently bad for the envionment. According to Jennifer Kahn's article in the New York Times, "In recent years, many environmental groups have quietly walked back thier opposition as evidence has mounted that exisiting GMOs are ... not inherently bad for the enviroment."(Source A) Despite early GMOs being largely focused on pest and herbicide resistance (Source A), many more modern GMOs aim for more environmental tolerance. In Kahn's article, she cites a 'flood-tolerant "scuba rice", a variety engineered to survive being submerged for up to 14 days rather than just three [with non-GMO rice]."(Source A) This allows rice to be more likely to survive the yearly sustained floods. This allows farmers to not have to replant crop and helps prevent wasting 4 million tons of pesticies and herbicites need to grow rice.
+
+
+But these benefits also impact consumers. Many GMO foods offer additional health benefits generally not naturally seen in non-GMO foods. Kahn cites Bt Corn as a prime example. "The introduction of Bt corn, which contains a gene from Bacillus thuringiensis, a naturally insect-resistant bacterium that organic farmers routely spray on crops, dropped the crop's insecticide use by 35 percent."(Source A) By including that gene, many of these corn don't contain the harmful chemicials that farmers generally use to grow corn. In addition, it helps reduce world hunger. Just like how the flood-tolerant rice helps prevent wasting herbicides and pesticies, it also helps reduce food waste. According to Kahn, "each year, Bangladesh and India lose roughly four million tons of rice to flooding -- enough to feed 30 million people."(Source A) This has pushed some farmers to shift to GMO crops. According to Paul Diehl's article, "in 2011, 160 million hectares of [GMO] crops were grown -- that is 10% of Earth's arable land and it was an 8% increase than in the previous year."(Source C) An added benefit to growing GMO crops is that its cheaper to grow, increases tields, and extends the time food remains edible. (Source C)
+This leads to economic benefits for farmers. According to Diehl, "the first [GMO] food, the Flavr-Savr Tomato, reduced the cost of producing canned tomato products by about 20% and numerous studies have shown an economic benefit ... [including] livestock [being able to] be raised less expensivelt, using feed made from [GMO] crops as exidenced by the recent change in EU policy for helping struggling farmers."(Source C) It is also clear that "genetically engineered traits that make plants and animals more resistant to disease, stay ripe longer, and grow more robustly in a variety of condictions are effective in reducing costs and providing economic benefits to food producers."(Source C)
+
+
+Yet, not everyone is stoked. According to the Kahn, 'the fear of such unforeseen effects -- what Kuzma calls "unknowingness" -- is perhaps consumers' biggest concern.'(Source A) These genetic interactions are famously complex. "Adding a new gene -- or simply changing how a gene is regulated (ie how active it is) -- rarely affects just one thing." writes Kahn. "Moreover, out understanding of these interactions, and their effects, is constantly evolving." This has spoiled consumer's viewpoint of GMO foods, something shown through Source D's cartoon of a frankenstein-like fish. All of this was made worse by the spread of the 'mad cow' epidemic and the initial introduction of GMOs without the public's knowledge, writes the Royal Economic Society paper. In their research, consumers would select the food with GMOs around 40% less when told that the food contained GMOs. Even when consulted about the background information about GMOs, such as the definition, criteria for classification, and current law about GMOs, selection only increased by 5%. While the authors cite price as a more important factor in the decisiton, with 65% of participants willing to eat GMO foods if it was suddiciently inexpensive, they do say that society holds a negative view on GMOS, which they claim led to more participants in the study being willing to consume GMO foods. They also cite other studies that further emphasize this, with one study having 91% of participants refusing to buy GMO foods.
+
+
+Overall, GMO foods offer many benefits to society, but are held back by a consumer hesitation to buy and/or consume genetically modified foods.
+</p>`
+
+
+let newHTML = `<p>The use of genetically modified foods, which fall under the term GMO, has long been contentious. According to a paper published by the Royal Economic Society, "Polling of European consumers consistently indicates a high degree of hostility to the presence of GMOs in the food supply." (Source H) This hostility  comes despite many scientists seeing potential to "create products that will enhance nutrition, increase crop yields, and reduce the use of toxic  pesticides and herbicides." (Source H). While science is being used in theory to benefit our society, many consumers see GMOs negatively due to the fear of negative health risks.
+
+
+Despite public worry about GMOs' affect  on the environment, studies have shown that GMOs are not inherently bad for the environment. According to Jennifer Kahn's article in the New York Times, "In recent years, many environmental groups have quietly walked back their  opposition as evidence has mounted that existing  GMOs are ... not inherently bad for the environment."(Source A) Despite early GMOs being largely focused on pest and herbicide resistance (Source A), many more modern GMOs aim for more environmental tolerance. In Kahn's article, she cites a 'flood-tolerant "scuba rice", a variety engineered to survive being submerged for up to 14 days rather than just three [with non-GMO rice].’ (Source A) This allows this rice variant  to be more likely to survive the yearly sustained floods. This allows farmers to not have to replant crops  and helps prevent wasting 4 million tons of pesticides  and herbicides needed  to grow rice. This shows the immense positives of GM foods on the environment, especially in the cases where the crops no longer need to be replanted and resprayed. 
+
+
+But these benefits extend to  consumers. Many GMO foods offer additional health benefits generally not naturally seen in non-GMO foods. Kahn cites Bt Corn as a prime example. "The introduction of Bt corn, which contains a gene from Bacillus thuringiensis, a naturally insect-resistant bacterium that organic farmers routley  spray on crops, dropped the crop's insecticide use by 35 percent."(Source A) By including that gene, many of these corn don't contain the harmful chemicals  that farmers generally use to grow corn. This allows consumers to stay healthy and no longer have to take nutritional supplements. In addition, it helps reduce world hunger. Just like how flood-tolerant  rice helps prevent wasting herbicides and pesticides , it also helps reduce food waste. According to Kahn, "each year, Bangladesh and India lose roughly four million tons of rice to flooding -- enough to feed 30 million people."(Source A) This has pushed some farmers to shift to GMO crops. According to Paul Diehl's article, "in 2011, 160 million hectares of [GMO] crops were grown -- that is 10% of Earth's arable land and it was an 8% increase than in the previous year."(Source C) This will help increase the amount of foods that is available to the world, making food more accessible to lower-income consumers. This leads to economic benefits for farmers. An added benefit to growing GMO crops is that it's cheaper to grow, increases yields, and extends the time food remains edible. (Source C). According to Diehl, "the first [GMO] food, the Flavr-Savr Tomato, reduced the cost of producing canned tomato products by about 20% and numerous studies have shown an economic benefit ... [including] livestock [being able to] be raised less expensively , using feed made from [GMO] crops as evidenced by the recent change in EU policy for helping struggling farmers."(Source C) It is also clear that "genetically engineered traits that make plants and animals more resistant to disease, stay ripe longer, and grow more robustly in a variety of conditions are effective in reducing costs and providing economic benefits to food producers."(Source C) This will allow the farmer to better survive and allow them to rise through the socioeconomic ladder faster, in addition to having food stay fresh longer. 
+
+
+Yet, not everyone is stoked. According to the Kahn, 'the fear of such unforeseen effects -- what Kuzma calls "unknowingness" -- is perhaps consumers' biggest concern.'(Source A) These genetic interactions are famously complex. "Adding a new gene -- or simply changing how a gene is regulated (ie how active it is) -- rarely affects just one thing." writes Kahn. "Moreover, out understanding of these interactions, and their effects, is constantly evolving." This has spoiled consumer's viewpoint of GMO foods, something shown through Source D's cartoon of a frankenstein-like fish. All of this was made worse by the spread of the 'mad cow' epidemic and the initial introduction of GMOs without the public's knowledge, writes the Royal Economic Society paper. In their research, consumers would select food with GMOs around 40% less when told that the food contains GMOs. Even when consulted about the background information about GMOs, such as the definition, criteria for classification, and current law about GMOs, selection only increased by 5%. While the authors cite price as a more important factor in the decision , with 65% of participants willing to eat GMO foods if it was sufficiently  inexpensive, they do say that society holds a negative view on GMOS, which they claim led to more participants in the study being willing to consume GMO foods. They also cite other studies that further emphasize this, with one study having 91% of participants refusing to buy GMO foods.
+
+
+Overall, GMO foods offer many benefits to society, but are held back by a consumer hesitation to buy and/or consume genetically modified foods.
+</p>`;
+
+// Diff HTML strings
+let output = htmldiff(originalHTML, newHTML);
+
+// Show HTML diff output as HTML (crazy right?)!
+document.getElementById("output").innerHTML = output;
+document.getElementById("outputOriginal").innerHTML = originalHTML;
+document.getElementById("outputNew").innerHTML = newHTML;
+</script>

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>People Change</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 50px;
+        }
+        #poem {
+            font-size: 20px;
+            white-space: pre-line;
+            max-width: 600px;
+            margin: auto;
+            text-align: left;
+        }
+        #reflection {
+            font-size: 20px;
+            white-space: pre-line;
+            max-width: 600px;
+            margin: auto;
+            text-align: left;
+            opacity: 0;
+            transition: opacity 2s ease-in; /* Smooth fade-in effect */
+        }
+    </style>
+</head>
+<body>
+
+    <h1>People Change</h1>
+    <h3>By: Dawn Lambert</h3>
+
+    <div id="poem"></div>
+    <br><br>
+    <br>
+    <h1>Reflection</h1>
+    <div id="reflection">The poem, “People Change”, is a deep reflection by the author about how people evolve over time, sometimes how you expect and others in ways you didn’t expect. It is a great viewpoint into the author’s thought process. It delves into great detail about the emotional turmoil of seeing people change, and knowing there is nothing you can do to stop it. It touches on the profound fear of the unknown.
+
+    The poem also has an interesting part of the author having this moment of reckoning where they question whether the person changed, or if they are just revealing their true self. We often build trust on what we know, thus making change something that makes us lose trust. This leads to a sense of betrayal and discomfort.
+
+    Overall, this poem paints a picture that I deeply empathize with. High school is where much of this happens. As people grow older, they mature and change in different ways. In my personal experience, I have seen this maturity lead to people creating a shell around themselves, becoming hostile to others. On the other hand, I have seen people I hate become better people, which has pushed me to rethink whether I should continue to have a grudge or not. For me, the biggest problem is still this sense of remembering the past, which shadows our judgment.
+
+    I also have a deep appreciation for the author digging at the idea of a “mask”. For example, I have seen someone I know in this English class change in ways that makes me want to push them away. In the past, I saw them as this person who is always picked on, but has a deep drive for knowledge. In this class, this image has burned down, where it seems like they are spiraling for the worse. To this day, I don’t know if I am seeing a more real version of them or if this is a part of maturing.</div>
+
+    <script>
+        const poemText = `People change.\nI realized that in the last couple of years.\nI watch some of the best people in my life I once loved grow into something else.\nOr someone else.\nIt's weird watching the people you knew before you was even able to walk grow into someone else.\nI know everyone goes through it.\nMaturity.\nAnd not everyone turns out what you thought. Maybe my problem was that I wanted everything to stay the same. A safe zone I guess you could call it.\n\nI realized there are two different things you can change into. Or two different roads you could say. Or the simple good vs bad. Maybe it's the coincidence that everyone I grew up with took the opposite direction I thought they would of never went. I talked to my Dad once about change. How I told him that seeing people change hurts. He told me seeing people change isn't what hurts, it remembering what they use to be. And I have to be honest that was one of the few times I didn't argue back. I realized he was right. I hated what the people I once called my life turn into something I hate. So pretty much the people I know became people I knew. It's really funny too when they told you many times that they aren't going to be something, surprise us both, and do what they said they wouldn't do.\n\nBut there's one thing I'm afraid of. What if the person I was so sure I knew, the person I knew before I was even born wasn't even the person I thought I knew, but instead they took off a mask. That they didn't change, they just revealed who they really are. I think I would rather think they changed than they revealed.\n\nOr maybe people don't change, but their priorities do.\n\nIn the end though, it's hard to watch people change, and it's harder remembering.\n\nBut recently I learned that people also change to better themselves. I learned that life is about changing for the better. If you had to let go of some people along the way, then go ahead. Incredible change happens in your life when you decide to take control in what you do have power over. I always knew that I couldn't change people's decisions. But I could change mine. Even though I'm still figuring out things for myself, I know I'm in control of the road I want to take.\n\nNow the funny part is I just need to take my own advice I'm giving myself instead of being scared.`;
+
+        const poemContainer = document.getElementById("poem");
+        let indexPoem = 0;
+
+        function typePoem() {
+            if (indexPoem < poemText.length) {
+                poemContainer.textContent += poemText[indexPoem];
+                indexPoem++;
+                let delay = (poemText[indexPoem - 1] === '.') ? 1000 : 60; // Pause after each period
+                setTimeout(typePoem, delay);
+            } else {
+                setTimeout(() => {
+                    document.getElementById("reflection").style.opacity = "1"; // Fade in reflection
+                }, 1500);
+            }
+        }
+
+        typePoem();
+    </script>
+
+</body>
+</html>
