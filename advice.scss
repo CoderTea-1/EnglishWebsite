@@ -1,0 +1,148 @@
+@import url('https://fonts.googleapis.com/css?family=Playfair+Display:400,400i,700,700i,900,900i');
+@import url('https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,600,600i,700,700i,800,800i');
+
+*,
+*::after,
+*::before {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+:root {
+  --font-text: "Open Sans", sans-serif;
+  --color-light: #fff;
+  --color-dark: #000000;
+  --color-brand: #ffeba7;
+  --info-size: 35vh;
+}
+
+body {
+  font-family: var(--font-text);
+  line-height: 1.6;
+  background-color: var(--color-dark);
+}
+
+.section-2 {
+  width: min(1200px, 90%);
+  margin: 40px auto 0;
+  padding: 20px 0;
+  line-height: 2;
+  color: var(--color-light);
+}
+
+// COMPONENT
+.c-hotels {
+  width: min(1200px, 90%);
+  margin: 0 auto;
+}
+
+.c-hotels__title {
+  width: min(1200px, 100%);
+  padding: 64px 20px;
+  color: var(--color-light);
+  text-align: center;
+  font-size: 44px;
+  color: var(--color-brand);
+}
+
+.c-hotels__list {
+  display: grid;
+  grid-gap: 40px;
+}
+
+.c-hotels__item {
+  position: sticky;
+  top: 50px;
+  right: 0;
+  left: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: 200px auto;
+  border: 1px solid var(--color-dark);
+  
+  @media (min-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: minmax(400px, 70vh);
+  }
+  
+  &:not(&:last-child) {
+    view-timeline-name: --card;
+    view-timeline-axis: block;
+    animation-timeline: --card;
+    animation-name: in-n-out;
+    animation-range: entry 90% cover 50%;
+    animation-fill-mode: both;
+  }
+  
+  &-figure {
+    grid-column: 1 / -1;
+    grid-row: 1 / 2;
+    
+    @media (min-width: 768px) {
+      grid-column: 1 / 2;
+      grid-row: 1 / -1;
+    }
+    
+    img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+  
+  &-info {
+    grid-column: 1 / -1;
+    grid-row: 2 / -1;
+    height: 100%;
+    display: grid;
+    align-content: center;
+    padding: 40px;
+    background-color: var(--color-light);
+    
+    @media (min-width: 768px) {
+      grid-column: 2 / -1;
+      grid-row: 1 / -1;
+    }
+  }
+  
+  &-title {
+    font-size: 36px;
+    font-weight: bold;
+  }
+  
+  &-subtitle {
+    margin-bottom: 16px;
+    text-transform: uppercase;
+  }
+  
+  &-excerpt {
+    margin-bottom: 24px;
+  }
+  
+  &-link {
+    width: max-content;
+    padding: 12px 24px;
+    text-decoration: none;
+    border: 1px solid var(--color-dark);
+    background-color: var(--color-light);
+    color: var(--color-dark);
+    transition: all .3s ease-in-out;
+    
+    &:hover {
+      background-color: var(--color-dark);
+      color: var(--color-light);
+    }
+  }
+}
+
+@keyframes in-n-out {
+  0%, 75% {
+    scale: 100%;
+  }
+  
+  100% {
+    scale: 85%;
+  }
+}
