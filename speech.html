@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>People Change</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 50px;
+            background-color: black;
+        }
+        #poem {
+            font-size: 20px;
+            white-space: pre-line;
+            max-width: 600px;
+            margin: auto;
+            text-align: left;
+            color: white;
+        }
+        #reflection {
+            font-size: 20px;
+            white-space: pre-line;
+            max-width: 600px;
+            margin: auto;
+            text-align: left;
+            opacity: 0;
+            transition: opacity 2s ease-in; /* Smooth fade-in effect */
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div style="color: white;">
+    <h1>Speech</h1>
+</div>
+
+    <div id="poem"></div>
+    
+    <script>
+        const poemText = `I wish my teachers and/or parents knew high school is dumb.\n I get it. Not a revolutionary idea. I get that this will probably sound like a rant because I suffered in high school.\nHigh school, in many ways, feels like this artificial maze we’re all supposed to navigate in order to “succeed.” But here’s the truth: success in high school often feels like it’s not about who you are or what you can do, but about fitting into a system that’s more focused on checking boxes than actually preparing us for the future.\nEven before we enter high school, we are drilled in with the ideas that grades, extracurriculars, and sports are what you need to be successful. We are told that high school makes or breaks a person; a final hurdle before college. And why? Because colleges look at everything we do during these years and decide if we’re worthy of their acceptance. But here’s the kicker: even within high school itself, we’re told that everything we do should somehow lead to that shiny college acceptance letter.\nTake this class for example. We are given a single assignment worth ⅓ of our final grade, making or breaking our chances of getting our letter of acceptance revoked. Does one single assignment over the waning days of our high school life really reflect who we are as students?\nNow, I think it unfair to point the finger at the teachers or administrators and scapegoat them for all our problems. The issue is more about the structure and ideology of higher education rather than people as a whole. Teachers, for the most part, want us to succeed. They want to teach us useful things. But they’re also working within a framework where their own success is measured by the same boxes we’re being told to check: tests, grades, and outcomes. And if we don't measure up, it’s not just on us. The system fails to support us in the way that we need, and, ultimately, we all lose.\nThis is where the problem lies. We’re all so obsessed with getting into a good college, landing that perfect job, earning a six-figure paycheck, that we forget the most important part of learning: learning itself. We’re taught to study for the test, not for life. We memorize facts, not because we’re curious, but because we’re told we have to. We are set up to perform, not to grow. We are often forced into a cookie cutter that only benefits those who know how to rig the system. \nInstead of analyzing different scenes from the Handmaid's Tale, we should be analyzing ourselves. How can we become a better version of ourselves? Why do we spend so much time studying for tests and memorizing information that we may never use again? What would happen if the focus shifted from preparing for a standardized test to preparing for life, relationships, and understanding the world around us?\nHigh School should be a place of reflection and becoming vulnerable. A space where you can ask deep questions and enjoy learning.\nMost importantly, high school should be a place where we can find people who love and support their friends for who they are, not because you’re achieving something or beneficial to them in a certain way, but because you’re human.\nI think there is a reason that many friendships don’t last into college. As we grow, we realize that real relationships aren’t built on performance or achievement, but on shared vulnerability and support. High school friendships, like many other aspects of this system, are often based on surface-level stuff: who can get you the test answers, who can drive you around as an underclassman, or who will help you climb the social ladder. But when you step outside of high school, those connections often fade, and you’re left with the realization that you’re looking for something much more meaningful.
+`;
+
+        const poemContainer = document.getElementById("poem");
+        let indexPoem = 0;
+
+        function typePoem() {
+            if (indexPoem < poemText.length) {
+                poemContainer.textContent += poemText[indexPoem];
+                indexPoem++;
+                let delay = (poemText[indexPoem - 1] === '.') ? 1000 : 60; // Pause after each period
+                setTimeout(typePoem, delay);
+            } else {
+                setTimeout(() => {
+                    document.getElementById("reflection").style.opacity = "1"; // Fade in reflection
+                }, 1500);
+            }
+        }
+
+        typePoem();
+    </script>
+
+</body>
+</html>
